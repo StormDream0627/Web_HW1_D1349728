@@ -29,7 +29,6 @@
             justify-content: center;
             align-items: center;
             height: 100vh;
-            /* 背景網格與徑向漸變 */
             background-image: 
                 radial-gradient(circle at 50% 50%, rgba(0, 100, 150, 0.15) 0%, transparent 80%),
                 linear-gradient(var(--rsi-border) 1px, transparent 1px),
@@ -37,7 +36,6 @@
             background-size: 100% 100%, 40px 40px, 40px 40px;
         }
 
-        /* 掃描線動畫效果 */
         body::after {
             content: "";
             position: absolute;
@@ -57,7 +55,6 @@
             text-align: center;
         }
 
-        /* 標題區域 */
         .header {
             margin-bottom: 30px;
             letter-spacing: 4px;
@@ -71,7 +68,6 @@
             text-shadow: 0 0 8px var(--rsi-blue);
         }
 
-        /* 主面板 */
         .main-panel {
             background: var(--rsi-panel-bg);
             border: 1px solid var(--rsi-border);
@@ -81,7 +77,6 @@
             box-shadow: 0 0 40px rgba(0, 0, 0, 0.6);
         }
 
-        /* 面板裝飾線條 */
         .main-panel::before {
             content: "";
             position: absolute;
@@ -118,7 +113,6 @@
             margin-bottom: 40px;
         }
 
-        /* 核心動態組件：倒數與進度 */
         .display-unit {
             border: 1px dashed var(--rsi-border);
             padding: 30px;
@@ -127,12 +121,13 @@
         }
 
         .timer-val {
-            font-size: 3.5rem;
+            font-size: 3rem;
             font-weight: 300;
             color: var(--rsi-blue);
             font-variant-numeric: tabular-nums;
             margin-bottom: 10px;
             display: block;
+            letter-spacing: 2px;
         }
 
         .progress-container {
@@ -149,7 +144,7 @@
             background: var(--rsi-blue);
             width: 45%;
             box-shadow: 0 0 10px var(--rsi-blue);
-            transition: width 0.4s ease;
+            transition: width 0.1s linear;
         }
 
         .label-text {
@@ -159,7 +154,6 @@
             opacity: 0.6;
         }
 
-        /* 按鈕設計 */
         .btn-group {
             display: flex;
             gap: 15px;
@@ -190,7 +184,6 @@
             font-weight: bold;
         }
 
-        /* 量子背景環動畫 */
         .quantum-bg {
             position: absolute;
             width: 600px; height: 600px;
@@ -202,12 +195,6 @@
         @keyframes pulse {
             0%, 100% { transform: scale(1); opacity: 0.3; }
             50% { transform: scale(1.1); opacity: 0.5; }
-        }
-
-        @media (max-width: 600px) {
-            .status-title { font-size: 1.6rem; }
-            .btn-group { flex-direction: column; align-items: center; }
-            .rsi-btn { width: 100%; }
         }
     </style>
 </head>
@@ -231,8 +218,8 @@
             </p>
 
             <div class="display-unit">
-                <span class="label-text">預計鏈結恢復倒數</span>
-                <div class="timer-val" id="timer">00:04:59</div>
+                <span class="label-text">預計鏈結恢復倒數 (時:分:秒:微秒)</span>
+                <div class="timer-val" id="timer">01:01:01:00</div>
                 
                 <div class="progress-container">
                     <div class="progress-bar" id="progress-bar"></div>
@@ -255,33 +242,59 @@
     </div>
 
     <script>
-        // 初始化狀態
-        let timeLeft = 300; 
-        let progress = 45;
+        // 設定初始參數
+        let totalTime = 3661; // 1小時1分鐘1秒
+        let timeLeft = totalTime; 
+        let startProgress = 45; // 起始進度
         
         const timerEl = document.getElementById('timer');
         const barEl = document.getElementById('progress-bar');
         const percentEl = document.getElementById('progress-percent');
 
-        // 計時器邏輯
-        function updateUI() {
-            // 倒數計時格式化
-            const mins = Math.floor(timeLeft / 60).toString().padStart(2, '0');
-            const secs = (timeLeft % 60).toString().padStart(2, '0');
-            const ms = Math.floor(Math.random() * 99).toString().padStart(2, '0');
-            timerEl.textContent = `${mins}:${secs}:${ms}`;
-
-            // 進度條緩步增長
-            if (progress < 99) {
-                progress += 0.02;
-                barEl.style.width = `${progress}%`;
-                percentEl.textContent = `${Math.floor(progress)}%`;
-            }
-
-            if (timeLeft > 0 && Math.random() > 0.99) {
+        // 1. 每秒執行一次的真實倒數
+        const countdownInterval = setInterval(() => {
+            if (timeLeft > 0) {
                 timeLeft--;
+            } else {
+                clearInterval(countdownInterval);
+                timerEl.style.color = "#ffcc00"; // 時間到變色提醒
+            }
+        }, 1000);
+
+        // 2. 高頻率 UI 更新 (每 50ms)，用於處理毫秒跳動與平滑進度條
+        function updateUI() {
+            // 格式化小時、分與秒
+            const hours = Math.floor(timeLeft / 3600).toString().padStart(2, '0');
+            const mins = Math.floor((timeLeft % 3600) / 60).toString().padStart(2, '0');
+            const secs = (timeLeft % 60).toString().padStart(2, '0');
+            
+            // 隨機跳動的「微秒」效果 (00-99)
+            const ms = Math.floor(Math.random() * 99).toString().padStart(2, '0');
+            
+            // 更新畫面文字格式：時:分:秒:微秒
+            timerEl.textContent = `${hours}:${mins}:${secs}:${ms}`;
+
+            // 計算當前進度
+            const currentProgress = startProgress + ((totalTime - timeLeft) / totalTime) * (100 - startProgress);
+            
+            if (currentProgress <= 100) {
+                barEl.style.width = `${currentProgress}%`;
+                percentEl.textContent = `${Math.floor(currentProgress)}%`;
             }
         }
+
+        // 啟動 UI 刷新循環
+        setInterval(updateUI, 50);
+
+        // 隨機系統閃爍
+        setInterval(() => {
+            if (Math.random() > 0.98) {
+                document.querySelector('.main-panel').style.filter = 'brightness(1.4)';
+                setTimeout(() => {
+                    document.querySelector('.main-panel').style.filter = 'none';
+                }, 40);
+            }
+        }, 1000);
     </script>
 </body>
 </html>
