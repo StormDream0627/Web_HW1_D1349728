@@ -47,6 +47,26 @@
             z-index: 10;
         }
 
+        /* UEE 背景 Logo 旋轉效果 */
+        .uee-logo-bg {
+            position: absolute;
+            width: 80vh;
+            height: 80vh;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 1;
+            opacity: 0.08; /* 極低不透明度，營造背景感 */
+            pointer-events: none;
+            filter: drop-shadow(0 0 20px var(--rsi-blue));
+            animation: rotate-uee 120s linear infinite;
+        }
+
+        @keyframes rotate-uee {
+            from { transform: translate(-50%, -50%) rotate(0deg); }
+            to { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+
         .container {
             width: 90%;
             max-width: 700px;
@@ -184,15 +204,16 @@
             font-weight: bold;
         }
 
-        .quantum-bg {
+        .quantum-pulse {
             position: absolute;
             width: 600px; height: 600px;
             border: 1px solid rgba(0, 209, 224, 0.05);
             border-radius: 50%;
-            animation: pulse 8s ease-in-out infinite;
+            z-index: 2;
+            animation: pulse-ring 8s ease-in-out infinite;
         }
 
-        @keyframes pulse {
+        @keyframes pulse-ring {
             0%, 100% { transform: scale(1); opacity: 0.3; }
             50% { transform: scale(1.1); opacity: 0.5; }
         }
@@ -200,7 +221,10 @@
 </head>
 <body>
 
-    <div class="quantum-bg"></div>
+    <!-- 背景 UEE Logo，確保此檔案與 HTML 在同一目錄下 -->
+    <img src="image_f1ab44.png" class="uee-logo-bg" alt="UEE Logo">
+
+    <div class="quantum-pulse"></div>
 
     <div class="container">
         <header class="header">
@@ -251,30 +275,25 @@
         const barEl = document.getElementById('progress-bar');
         const percentEl = document.getElementById('progress-percent');
 
-        // 1. 每秒執行一次的真實倒數
+        // 每秒執行一次的真實倒數
         const countdownInterval = setInterval(() => {
             if (timeLeft > 0) {
                 timeLeft--;
             } else {
                 clearInterval(countdownInterval);
-                timerEl.style.color = "#ffcc00"; // 時間到變色提醒
+                timerEl.style.color = "#ffcc00"; 
             }
         }, 1000);
 
-        // 2. 高頻率 UI 更新 (每 50ms)，用於處理毫秒跳動與平滑進度條
+        // 高頻率 UI 更新 (每 50ms)
         function updateUI() {
-            // 格式化小時、分與秒
             const hours = Math.floor(timeLeft / 3600).toString().padStart(2, '0');
             const mins = Math.floor((timeLeft % 3600) / 60).toString().padStart(2, '0');
             const secs = (timeLeft % 60).toString().padStart(2, '0');
-            
-            // 隨機跳動的「微秒」效果 (00-99)
             const ms = Math.floor(Math.random() * 99).toString().padStart(2, '0');
             
-            // 更新畫面文字格式：時:分:秒:微秒
             timerEl.textContent = `${hours}:${mins}:${secs}:${ms}`;
 
-            // 計算當前進度
             const currentProgress = startProgress + ((totalTime - timeLeft) / totalTime) * (100 - startProgress);
             
             if (currentProgress <= 100) {
@@ -283,7 +302,6 @@
             }
         }
 
-        // 啟動 UI 刷新循環
         setInterval(updateUI, 50);
 
         // 隨機系統閃爍
