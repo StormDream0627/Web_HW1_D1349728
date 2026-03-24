@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RSI 系統狀態 | 連結中斷</title>
+    <style>
+        :root {
+            --rsi-blue: #00d1e0;
+            --rsi-dark-bg: #000c14;
+            --rsi-panel-bg: rgba(5, 26, 36, 0.9);
+            --rsi-border: rgba(0, 209, 224, 0.3);
+            --rsi-text: #e0f7fa;
+            --rsi-danger: #ff4d4d;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Roboto, 'Orbitron', sans-serif;
+        }
+
+        body {
+            background-color: var(--rsi-dark-bg);
+            color: var(--rsi-text);
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            /* 背景網格與徑向漸變 */
+            background-image: 
+                radial-gradient(circle at 50% 50%, rgba(0, 100, 150, 0.15) 0%, transparent 80%),
+                linear-gradient(var(--rsi-border) 1px, transparent 1px),
+                linear-gradient(90deg, var(--rsi-border) 1px, transparent 1px);
+            background-size: 100% 100%, 40px 40px, 40px 40px;
+        }
+
+        /* 掃描線動畫效果 */
+        body::after {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%), 
+                        linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+            background-size: 100% 3px, 2px 100%;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 700px;
+            z-index: 5;
+            position: relative;
+            text-align: center;
+        }
+
+        /* 標題區域 */
+        .header {
+            margin-bottom: 30px;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            opacity: 0.8;
+        }
+
+        .header h1 {
+            font-size: 1rem;
+            color: var(--rsi-blue);
+            text-shadow: 0 0 8px var(--rsi-blue);
+        }
+
+        /* 主面板 */
+        .main-panel {
+            background: var(--rsi-panel-bg);
+            border: 1px solid var(--rsi-border);
+            padding: 50px 40px;
+            backdrop-filter: blur(15px);
+            position: relative;
+            box-shadow: 0 0 40px rgba(0, 0, 0, 0.6);
+        }
+
+        /* 面板裝飾線條 */
+        .main-panel::before {
+            content: "";
+            position: absolute;
+            top: -1px; left: 10%; right: 10%; height: 2px;
+            background: var(--rsi-blue);
+            box-shadow: 0 0 15px var(--rsi-blue);
+        }
+
+        .error-code {
+            display: inline-block;
+            font-family: monospace;
+            color: var(--rsi-danger);
+            border: 1px solid var(--rsi-danger);
+            padding: 5px 15px;
+            font-size: 0.85rem;
+            margin-bottom: 25px;
+            letter-spacing: 1px;
+        }
+
+        .status-title {
+            font-size: 2.2rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            margin-bottom: 20px;
+            color: #fff;
+            letter-spacing: 2px;
+        }
+
+        .status-desc {
+            color: var(--rsi-blue);
+            font-size: 1rem;
+            opacity: 0.9;
+            line-height: 1.8;
+            margin-bottom: 40px;
+        }
+
+        /* 核心動態組件：倒數與進度 */
+        .display-unit {
+            border: 1px dashed var(--rsi-border);
+            padding: 30px;
+            background: rgba(0, 0, 0, 0.3);
+            margin-bottom: 40px;
+        }
+
+        .timer-val {
+            font-size: 3.5rem;
+            font-weight: 300;
+            color: var(--rsi-blue);
+            font-variant-numeric: tabular-nums;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        .progress-container {
+            width: 100%;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            position: relative;
+            margin-top: 20px;
+        }
+
+        .progress-bar {
+            position: absolute;
+            left: 0; top: 0; height: 100%;
+            background: var(--rsi-blue);
+            width: 45%;
+            box-shadow: 0 0 10px var(--rsi-blue);
+            transition: width 0.4s ease;
+        }
+
+        .label-text {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            opacity: 0.6;
+        }
+
+        /* 按鈕設計 */
+        .btn-group {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+
+        .rsi-btn {
+            padding: 14px 25px;
+            border: 1px solid var(--rsi-blue);
+            background: transparent;
+            color: var(--rsi-blue);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            min-width: 180px;
+        }
+
+        .rsi-btn:hover {
+            background: rgba(0, 209, 224, 0.15);
+            box-shadow: 0 0 20px rgba(0, 209, 224, 0.3);
+        }
+
+        .rsi-btn.primary {
+            background: var(--rsi-blue);
+            color: var(--rsi-dark-bg);
+            font-weight: bold;
+        }
+
+        /* 量子背景環動畫 */
+        .quantum-bg {
+            position: absolute;
+            width: 600px; height: 600px;
+            border: 1px solid rgba(0, 209, 224, 0.05);
+            border-radius: 50%;
+            animation: pulse 8s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 0.3; }
+            50% { transform: scale(1.1); opacity: 0.5; }
+        }
+
+        @media (max-width: 600px) {
+            .status-title { font-size: 1.6rem; }
+            .btn-group { flex-direction: column; align-items: center; }
+            .rsi-btn { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="quantum-bg"></div>
+
+    <div class="container">
+        <header class="header">
+            <h1>ROBERTS SPACE INDUSTRIES</h1>
+        </header>
+
+        <main class="main-panel">
+            <div class="error-code">STATUS_ERROR: CODE_30007</div>
+            
+            <h2 class="status-title">量子鏈結異常</h2>
+            
+            <p class="status-desc">
+                公民，我們偵測到伺服器節點出現非預期的位移。<br>
+                技術小組已啟動緊急重啟協議，請在座位上保持待命。
+            </p>
+
+            <div class="display-unit">
+                <span class="label-text">預計鏈結恢復倒數</span>
+                <div class="timer-val" id="timer">00:04:59</div>
+                
+                <div class="progress-container">
+                    <div class="progress-bar" id="progress-bar"></div>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-top: 10px;">
+                    <span class="label-text">SYSTEM RECOVERY</span>
+                    <span class="label-text" id="progress-percent">45%</span>
+                </div>
+            </div>
+
+            <div class="btn-group">
+                <button class="rsi-btn" onclick="location.reload()">重新建立鏈結</button>
+                <button class="rsi-btn primary" onclick="window.open('https://status.robertsspaceindustries.com/')">通訊中心狀態</button>
+            </div>
+        </main>
+
+        <footer style="margin-top: 30px; font-size: 0.65rem; opacity: 0.4; letter-spacing: 2px; text-transform: uppercase;">
+            Authorized UEE Terminal // © 2956 Roberts Space Industries
+        </footer>
+    </div>
+
+    <script>
+        // 初始化狀態
+        let timeLeft = 300; 
+        let progress = 45;
+        
+        const timerEl = document.getElementById('timer');
+        const barEl = document.getElementById('progress-bar');
+        const percentEl = document.getElementById('progress-percent');
+
+        // 計時器邏輯
+        function updateUI() {
+            // 倒數計時格式化
+            const mins = Math.floor(timeLeft / 60).toString().padStart(2, '0');
+            const secs = (timeLeft % 60).toString().padStart(2, '0');
+            const ms = Math.floor(Math.random() * 99).toString().padStart(2, '0');
+            timerEl.textContent = `${mins}:${secs}:${ms}`;
+
+            // 進度條緩步增長
+            if (progress < 99) {
+                progress += 0.02;
+                barEl.style.width = `${progress}%`;
+                percentEl.textContent = `${Math.floor(progress)}%`;
+            }
+
+            if (timeLeft > 0 && Math.random() > 0.99) {
+                timeLeft--;
+            }
+        }
+    </script>
+</body>
+</html>
